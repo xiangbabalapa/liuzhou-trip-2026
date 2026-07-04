@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🚗 端午柳州自驾行程</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Microsoft YaHei','PingFang SC',sans-serif;background:#0f172a;color:#e2e8f0;line-height:1.6}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+.header{text-align:center;padding:32px 0 16px}
+.header h1{font-size:26px;background:linear-gradient(135deg,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.header p{color:#94a3b8;font-size:14px}
+.header .stats{display:flex;justify-content:center;gap:28px;margin-top:14px;flex-wrap:wrap}
+.stat{text-align:center}.stat b{display:block;font-size:22px;color:#f1f5f9}.stat span{font-size:11px;color:#64748b}
+#map{height:500px;width:100%;border-radius:12px;margin:16px 0}
+.legend{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;font-size:12px;color:#94a3b8}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.day{background:#1e293b;border-radius:10px;padding:16px;margin-bottom:14px}
+.day h3{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.badge{font-size:11px;padding:2px 8px;border-radius:4px;color:#fff}
+.b1{background:#ef4444}.b2{background:#3b82f6}.b3{background:#f59e0b}.b4{background:#22c55e}
+.tl{position:relative;padding-left:20px}
+.tl::before{content:'';position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:#334155}
+.ti{position:relative;padding:6px 0 6px 14px;font-size:13px;color:#cbd5e1}
+.ti::before{content:'';position:absolute;left:-17px;top:10px;width:10px;height:10px;border-radius:50%;border:2px solid #60a5fa;background:#0f172a}
+.ti.f::before{border-color:#f59e0b}.ti.s::before{border-color:#34d399}.ti.h::before{border-color:#a78bfa}.ti.d::before{border-color:#f87171}
+.ti b{color:#f1f5f9}.ti .dm{color:#64748b;font-size:12px}
+.cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.cc{background:#1e293b;border-radius:10px;padding:16px}
+.cc h4{font-size:14px;color:#94a3b8;margin-bottom:10px}
+.cc table{width:100%;font-size:13px;border-collapse:collapse}
+.cc td{padding:4px 0;border-bottom:1px solid #334155;color:#cbd5e1}.cc td:last-child{text-align:right;color:#f1f5f9;font-weight:500}
+.cc tr:last-child td{border:none;font-weight:bold;color:#34d399}
+.tip{background:#1a2744;border-left:3px solid #60a5fa;border-radius:0 8px 8px 0;padding:12px 16px;margin:14px 0;font-size:13px;color:#94a3b8}
+.tip b{color:#60a5fa}
+table.cmp{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0}
+.cmp th{background:#1e293b;padding:8px 10px;text-align:left;color:#94a3b8;border-bottom:2px solid #334155}
+.cmp td{padding:8px 10px;border-bottom:1px solid #1e293b;color:#cbd5e1}
+.cmp .hl{color:#34d399;font-weight:bold}
+.opt{border:2px solid #334155;border-radius:12px;padding:20px;margin:14px 0;cursor:pointer;transition:.2s}
+.opt:hover{border-color:#60a5fa}
+.opt h3{margin-bottom:10px}
+.opt .pick{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;background:#22c55e;color:#fff;margin-left:8px}
+.opt .npick{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;background:#475569;color:#94a3b8;margin-left:8px}
+.route-tab{display:flex;gap:8px;margin-bottom:16px}
+.route-tab button{padding:8px 16px;border-radius:8px;border:2px solid #334155;background:#1e293b;color:#94a3b8;cursor:pointer;font-size:13px;transition:.2s}
+.route-tab button.active{border-color:#60a5fa;color:#60a5fa;background:#1a2744}
+.route-panel{display:none}.route-panel.show{display:block}
+footer{text-align:center;padding:30px 0;color:#475569;font-size:12px}
+section h2{font-size:18px;color:#60a5fa;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid #1e293b}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="header">
+<h1>🚗 端午柳州+桂林阳朔自驾行程</h1>
+<p>6/18（四）— 6/21（日）｜ 4人电车自驾 ｜ 人均约 1,350 元</p>
+<div class="stats">
+<div class="stat"><b>4</b><span>天 3 晚</span></div>
+<div class="stat"><b>1,130</b><span>公里</span></div>
+<div class="stat"><b>~1,350</b><span>元/人</span></div>
+<div class="stat"><b>3-4</b><span>城市</span></div>
+<div class="stat"><b>12+</b><span>打卡点</span></div>
+</div>
+</div>
+
+<div id="map"></div>
+<div class="legend">
+<span><i style="background:#ef4444"></i>Day1 出发</span>
+<span><i style="background:#3b82f6"></i>Day2 柳州→桂林</span>
+<span><i style="background:#f59e0b"></i>Day3 阳朔</span>
+<span><i style="background:#22c55e"></i>Day4 返程</span>
+<span><i style="background:#a78bfa"></i>住宿</span>
+</div>
+
+<!-- 路线选择 -->
+<section>
+<h2>🗺️ 两条路线选择</h2>
+<div class="route-tab">
+<button class="active" onclick="showRoute('A')">方案A：桂林+阳朔（推荐）</button>
+<button onclick="showRoute('B')">方案B：梧州骑楼城</button>
+</div>
+
+<!-- ====== 方案 A ====== -->
+<div id="routeA" class="route-panel show">
+<div class="opt"><h3>方案A：柳州→桂林→阳朔→深圳 <span class="pick">✓ 推荐</span></h3>
+<p style="color:#94a3b8;font-size:13px">桂林山水甲天下，阳朔山水甲桂林。遇龙河竹筏+十里画廊骑行+西街夜生活，体验完全不同于柳州的城市风光。</p>
+<table class="cmp" style="margin-top:10px">
+<tr><th>路线</th><th>距离</th><th>车程</th><th>特色</th></tr>
+<tr><td>Day2 下午：柳州→桂林</td><td>160km</td><td>1.5h</td><td>沿G78/G65，沿途喀斯特山水</td></tr>
+<tr><td>Day3 上午：桂林→阳朔</td><td>65km</td><td>1.5h</td><td>沿漓江走，风景如画</td></tr>
+<tr><td>Day4：阳朔→深圳</td><td>500km</td><td>5.5h</td><td>G65→G80→G4</td></tr>
+<tr><td><b>合计</b></td><td><b>~725km</b></td><td><b>~8.5h</b></td><td></td></tr>
+</table>
+</div>
+
+<div class="day">
+<h3><span class="badge b1">DAY 1</span> 6/18 周四 ｜ 出发 → 柳州</h3>
+<div class="tl">
+<div class="ti d"><b>12:15</b> 从家出发（顺风车 85元）<br><span class="dm">家→横沥地铁站A口，62km/1.5h</span></div>
+<div class="ti"><b>13:15</b> 横沥集合 → 13:30 出发去柳州<br><span class="dm">G78汕昆高速，500km/6h</span></div>
+<div class="ti d"><b>~16:30</b> 肇庆服务区休息+电车快充</div>
+<div class="ti d"><b>~19:30</b> 抵达柳州</div>
+<div class="ti h"><b>~20:00</b> 🏨 入住怡程酒店（五星步行街）</div>
+<div class="ti f"><b>20:00+</b> 🍜 五星步行街觅食</div>
+</div>
+</div>
+
+<div class="day">
+<h3><span class="badge b2">DAY 2</span> 6/19 周五 ｜ 柳州上午 → 桂林下午</h3>
+<div class="tl">
+<div class="ti f"><b>08:30</b> 🍜 <b>青云市场</b>觅食<br><span class="dm">张记玉米汁、潘姐粉饺、米粉</span></div>
+<div class="ti s"><b>10:00</b> 🏛️ <b>柳州博物馆</b><br><span class="dm">了解柳州历史，免费需预约</span></div>
+<div class="ti f"><b>11:30</b> 🦆 午餐：秋食鸭脚煲<br><span class="dm">柳州特色，酸笋鸭脚煲</span></div>
+<div class="ti d"><b>13:00</b> 🚗 出发去桂林<br><span class="dm">G78/G65，160km/1.5h</span></div>
+<div class="ti s"><b>14:30</b> 🏔️ <b>桂林市区</b>随便逛<br><span class="dm">象鼻山（远观免费）、两江四湖</span></div>
+<div class="ti f"><b>17:00</b> 🍜 桂林米粉+啤酒鱼<br><span class="dm">崇善米粉、大师傅啤酒鱼</span></div>
+<div class="ti h"><b>晚</b> 🏨 入住桂林酒店<br><span class="dm">2间双人房</span></div>
+</div>
+</div>
+
+<div class="day">
+<h3><span class="badge b3">DAY 3</span> 6/20 周六 ｜ 桂林 → 阳朔（全天）</h3>
+<div class="tl">
+<div class="ti d"><b>08:30</b> 🚗 桂林→阳朔<br><span class="dm">沿漓江走，65km/1.5h，沿途山水如画</span></div>
+<div class="ti s"><b>10:00</b> 🛶 <b>遇龙河竹筏漂流</b><br><span class="dm">金龙桥→旧县段（经典），160元/人，90分钟<br>人工撑筏，安静缓慢，沿途7个坝堤，每过一坝都好玩</span></div>
+<div class="ti f"><b>12:00</b> 🍺 遇龙河畔午餐<br><span class="dm">农家菜，啤酒鱼</span></div>
+<div class="ti s"><b>13:30</b> 🚲 <b>十里画廊骑行</b><br><span class="dm">租电动车 30元/天，5km骑行道<br>石峰林立+田园风光，工农桥拍月亮山</span></div>
+<div class="ti s"><b>16:00</b> 🏘️ <b>西街</b>逛逛<br><span class="dm">手工店+小吃+清吧，傍晚去不晒</span></div>
+<div class="ti f"><b>18:00</b> 🍺 晚餐：啤酒鱼+田螺酿<br><span class="dm">谢大姐啤酒鱼、荔浦芋头扣肉</span></div>
+<div class="ti h"><b>晚</b> 🏨 入住阳朔民宿<br><span class="dm">西街附近，2间房</span></div>
+</div>
+</div>
+
+<div class="day">
+<h3><span class="badge b4">DAY 4</span> 6/21 周日 ｜ 阳朔 → 深圳</h3>
+<div class="tl">
+<div class="ti f"><b>08:00</b> 🥣 早餐（阳朔米粉）</div>
+<div class="ti s"><b>08:30</b> 🌅 <b>工农桥</b>看日出/拍照<br><span class="dm">拍月亮山最佳机位</span></div>
+<div class="ti d"><b>09:30</b> 🚗 出发回深圳<br><span class="dm">G65→G80→G4，500km/5.5h</span></div>
+<div class="ti"><b>~12:00</b> 肇庆服务区休息+快充</div>
+<div class="ti d"><b>~15:00</b> 🏠 到家！</div>
+</div>
+</div>
+</div>
+
+<!-- ====== 方案 B ====== -->
+<div id="routeB" class="route-panel">
+<div class="opt"><h3>方案B：柳州→梧州骑楼城→深圳 <span class="npick">备选</span></h3>
+<p style="color:#94a3b8;font-size:13px">梧州骑楼城——中国最大百年骑楼建筑群，免费，不商业化。正宗粤式早茶、龟苓膏发源地。Day4 轻松 3.5h 到家。</p>
+<table class="cmp" style="margin-top:10px">
+<tr><th>路线</th><th>距离</th><th>车程</th><th>特色</th></tr>
+<tr><td>Day3：柳州→梧州</td><td>230km</td><td>2.5h</td><td>骑楼城+美食</td></tr>
+<tr><td>Day4：梧州→深圳</td><td>350km</td><td>3.5h</td><td>轻松返程</td></tr>
+<tr><td><b>合计</b></td><td><b>~580km</b></td><td><b>~6h</b></td><td></td></tr>
+</table>
+</div>
+
+<div class="day">
+<h3><span class="badge b1">DAY 1</span> 同方案A</h3><div class="tl"><div class="ti">横沥→柳州，500km/6h，入住怡程酒店</div></div>
+</div>
+<div class="day">
+<h3><span class="badge b2">DAY 2</span> 6/19 柳州市区全天</h3>
+<div class="tl">
+<div class="ti f"><b>09:15</b> 🍜 青云市场 → <b>10:30</b> 🛕 西来古寺 → <b>11:00</b> 🏛️ 柳州博物馆</div>
+<div class="ti f"><b>12:00</b> 🦆 秋食鸭脚煲午餐</div>
+<div class="ti s"><b>13:30</b> 🌊 滨江东路 → <b>14:30</b> 🏗️ 工业博物馆 → <b>15:30</b> 🏘️ 窑埠古镇（含夜景）</div>
+<div class="ti"><b>18:00</b> 💆 茶麸洗头 → <b>19:00</b> 🍢 螺蛳粉/烧烤晚餐</div>
+</div>
+</div>
+<div class="day">
+<h3><span class="badge b3">DAY 3</span> 6/20 柳州→梧州</h3>
+<div class="tl">
+<div class="ti s"><b>08:30</b> ⛰️ 马鞍山公园 → <b>09:30</b> 🌿 龙潭公园</div>
+<div class="ti d"><b>12:30</b> 🚗 柳州→梧州，230km/2.5h</div>
+<div class="ti s"><b>15:00</b> 🏘️ <b>梧州骑楼城</b>（560栋百年骑楼，免费）</div>
+<div class="ti f"><b>15:30</b> 🍵 龟苓膏/六堡茶/纸包鸡</div>
+<div class="ti h"><b>晚</b> 🏨 梧州酒店</div>
+</div>
+</div>
+<div class="day">
+<h3><span class="badge b4">DAY 4</span> 6/21 梧州→深圳</h3>
+<div class="tl">
+<div class="ti s"><b>08:30</b> 🌊 河滨公园（西江桂江交汇点）</div>
+<div class="ti d"><b>10:00</b> 🚗 梧州→深圳，350km/3.5h</div>
+<div class="ti"><b>~13:30</b> 🏠 到家！</div>
+</div>
+</div>
+</div>
+
+<!-- 方案对比 -->
+<section>
+<h2>⚖️ 两方案对比</h2>
+<table class="cmp">
+<tr><th></th><th class="hl">方案A（桂林+阳朔）</th><th>方案B（梧州骑楼城）</th></tr>
+<tr><td>人均总费用</td><td class="hl">~1,350 元</td><td>~1,225 元</td></tr>
+<tr><td>总驾驶距离</td><td>~1,130km</td><td class="hl">~1,080km</td></tr>
+<tr><td>Day4 返程</td><td>5.5h</td><td class="hl">3.5h</td></tr>
+<tr><td>风景类型</td><td class="hl">山水自然（遇龙河/十里画廊）</td><td>历史人文（骑楼城/美食）</td></tr>
+<tr><td>门票花费</td><td>遇龙河160+竹筏等</td><td class="hl">全部免费</td></tr>
+<tr><td>体验丰富度</td><td class="hl">⭐⭐⭐⭐⭐（漂流+骑行+西街）</td><td>⭐⭐⭐（逛吃为主）</td></tr>
+<tr><td>适合人群</td><td class="hl">喜欢户外/自然/拍照</td><td>喜欢美食/轻松/不赶路</td></tr>
+</table>
+</section>
+
+<!-- 费用 -->
+<section>
+<h2>💰 费用明细（4人均摊）</h2>
+<p style="color:#64748b;font-size:13px;margin-bottom:14px">租车由 group 内其他人负责。住宿：2间双人房（2男2女），100-150元/间/晚。</p>
+<div class="cost-grid">
+<div class="cc">
+<h4>🚗 交通（来回总费用）</h4>
+<table>
+<tr><td>顺风车（本人→横沥）</td><td>85元</td></tr>
+<tr><td>租车 4天（230×4）</td><td>920元 ÷4 = 230元/人</td></tr>
+<tr><td>充电（~1130km）</td><td>~203元 ÷4 = 51元/人</td></tr>
+<tr><td>高速费（来回）</td><td>~670元 ÷4 = 168元/人</td></tr>
+<tr><td>停车费</td><td>~50元 ÷4 = 13元/人</td></tr>
+<tr><td><b>交通小计</b></td><td><b>462元/人</b></td></tr>
+</table>
+</div>
+<div class="cc">
+<h4>🏨 住宿（3晚）</h4>
+<table>
+<tr><td>6/18-19 柳州 怡程酒店</td><td>125元/人</td></tr>
+<tr><td>6/19-20 桂林/柳州酒店</td><td>125元/人</td></tr>
+<tr><td>6/20-21 阳朔/梧州酒店</td><td>63元/人</td></tr>
+<tr><td><b>住宿小计</b></td><td><b>313元/人</b></td></tr>
+</table>
+</div>
+<div class="cc">
+<h4>🍽️ 餐饮+门票+其他</h4>
+<table>
+<tr><td>餐饮 4天</td><td>~100元/天×4 = 400元</td></tr>
+<tr><td>景点门票（方案A）</td><td>~100元（遇龙河竹筏等）</td></tr>
+<tr><td>其他（茶麸洗头等）</td><td>~50元</td></tr>
+<tr><td><b>餐饮门票小计</b></td><td><b>550元/人</b></td></tr>
+</table>
+</div>
+</div>
+<div class="tip" style="margin-top:16px">
+<b>💸 人均总计：</b>交通 462 + 住宿 313 + 餐饮门票 550 ≈ <b>1,325 元/人</b><br>
+<b>本人个人：</b>1,325 + 85（顺风车）≈ <b>1,410 元</b>
+</div>
+</section>
+
+<!-- 高速费 -->
+<section>
+<h2>🛣️ 高速费说明（来回总费用）</h2>
+<table class="cmp">
+<tr><th>路段</th><th>方向</th><th>费用</th></tr>
+<tr><td>横沥 → 柳州（G78）</td><td>去程</td><td>~250元</td></tr>
+<tr><td>柳州 → 桂林/阳朔（G78/G65）</td><td>去程</td><td>~80元</td></tr>
+<tr><td>阳朔/梧州 → 深圳（G65/G80/G4）</td><td>回程</td><td>~280元</td></tr>
+<tr><td>服务区停车+充电</td><td>来回</td><td>~60元</td></tr>
+<tr><td><b>高速+停车合计（来回）</b></td><td></td><td><b>~670元</b></td></tr>
+</table>
+</section>
+
+<!-- 充电 -->
+<section>
+<h2>⚡ 充电规划（电车）</h2>
+<table class="cmp">
+<tr><th>路段</th><th>距离</th><th>充电建议</th></tr>
+<tr><td>横沥 → 柳州</td><td>500km</td><td>肇庆/云浮服务区快充</td></tr>
+<tr><td>柳州市区</td><td>30km</td><td>酒店慢充过夜</td></tr>
+<tr><td>柳州 → 桂林/阳朔</td><td>225km</td><td>桂林酒店慢充过夜</td></tr>
+<tr><td>阳朔 → 深圳</td><td>500km</td><td>肇庆服务区快充</td></tr>
+<tr><td><b>合计</b></td><td><b>~1,255km</b></td><td><b>~225元（人均56元）</b></td></tr>
+</table>
+</section>
+
+<!-- 出行方式对比 -->
+<section>
+<h2>⚖️ 自驾 vs 高铁</h2>
+<table class="cmp">
+<tr><th></th><th class="hl">自驾（推荐）</th><th>高铁</th></tr>
+<tr><td>人均交通费</td><td class="hl">462 元</td><td>~1,100 元</td></tr>
+<tr><td>人均总费用</td><td class="hl">~1,325 元</td><td>~2,400 元</td></tr>
+<tr><td>行李/灵活性</td><td class="hl">✅ 放车上，自由走</td><td>❌ 拖着走，打车衔接</td></tr>
+<tr><td>阳朔/遇龙河</td><td class="hl">✅ 直接开过去</td><td>❌ 需大巴/包车</td></tr>
+<tr><td>驾驶疲劳</td><td>❌ 有人开长途</td><td class="hl">✅ 无</td></tr>
+</table>
+</section>
+
+<!-- 注意事项 -->
+<section>
+<h2>📋 注意事项</h2>
+<div class="tip"><b>虎门大桥</b>端午可能堵，Day1 建议 12:15 前出发</div>
+<div class="tip"><b>端午高速不免费</b>（仅春节/清明/五一/国庆免费）</div>
+<div class="tip"><b>电车充电</b>：肇庆快充×2次 + 酒店慢充×2晚</div>
+<div class="tip"><b>遇龙河</b>：通过"阳朔文旅"公众号预约，选金龙桥→旧县段</div>
+<div class="tip"><b>十里画廊</b>：租电动车（30元/天），别租自行车太累</div>
+<div class="tip"><b>天气</b>：6月广西多雨，带伞；阳朔山区注意路况</div>
+</section>
+
+<footer>Generated by Claude Code ｜ 2026-06-14</footer>
+</div>
+
+<script>
+function showRoute(r){
+  document.querySelectorAll('.route-panel').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.route-tab button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('route'+r).classList.add('show');
+  event.target.classList.add('active');
+  updateMap(r);
+}
+
+const map=L.map('map',{zoomControl:true}).setView([23.8,110.5],7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:18}).addTo(map);
+const layers={A:[],B:[]};
+
+function mk(p,name,day,color,popup,route){
+  const icon=L.divIcon({className:'',html:`<div style="background:${color};color:#fff;padding:3px 8px;border-radius:10px;font-size:11px;white-space:nowrap;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.5)">${day} ${name}</div>`,iconAnchor:[0,-8]});
+  const m=L.marker(p,{icon}).addTo(map).bindPopup(`<b>${day} ${name}</b><br><span style="color:#666">${popup||''}</span>`,{maxWidth:280});
+  if(route)layers[route].push(m);
+  return m;
+}
+function rl(pts,color,popup,route){
+  const l=L.polyline(pts,{color,weight:3,dashArray:'8,4',opacity:.7}).addTo(map).bindPopup(popup);
+  if(route)layers[route].push(l);
+  return l;
+}
+
+// Common
+mk([22.75,113.55],'🏠 出发点','D1','#ef4444','12:15 出发','AB');
+mk([22.80,113.53],'🚇 横沥集合点','D1','#ef4444','13:15 集合，广州地铁18号线','AB');
+mk([24.33,109.41],'🏨 怡程酒店(柳州)','D1','#a78bfa','~20:00 入住','AB');
+rl([[22.75,113.55],[22.80,113.53],[23.50,112.10],[24.00,110.50],[24.33,109.41]],'#ef4444','D1 横沥→柳州 500km/6h','AB');
+
+// Day2 common
+mk([24.315,109.405],'🍜 青云市场','D2','#3b82f6','08:30 张记玉米汁、潘姐粉粉饺','AB');
+mk([24.325,109.415],'🏛️ 柳州博物馆','D2','#3b82f6','10:00 免费需预约','AB');
+mk([24.31,109.40],'🦆 鸭脚煲午餐','D2','#f59e0b','11:30 秋食鸭脚煲','AB');
+
+// Day2 A: →桂林
+mk([25.27,110.29],'🏔️ 桂林市区','D2','#3b82f6','14:30 象鼻山/两江四湖','A');
+mk([25.27,110.30],'🍜 桂林米粉','D2','#f59e0b','17:00 崇善米粉+啤酒鱼','A');
+mk([25.28,110.28],'🏨 桂林酒店','D2','#a78bfa','晚入住','A');
+rl([[24.33,109.41],[24.80,109.80],[25.27,110.29]],'#3b82f6','D2 柳州→桂林 160km/1.5h','A');
+
+// Day2 B: 柳州全天
+mk([24.32,109.41],'🛕 西来古寺','D2','#3b82f6','10:30 唐代1200年','B');
+mk([24.305,109.42],'🌊 滨江东路','D2','#3b82f6','13:30 柳江漫步','B');
+mk([24.32,109.43],'🏗️ 工业博物馆','D2','#3b82f6','14:30 老火车头','B');
+mk([24.30,109.43],'🏘️ 窑埠古镇','D2','#3b82f6','15:30 蟠龙双塔夜景','B');
+mk([24.31,109.40],'💆 茶麸洗头','D2','#f59e0b','18:00 柳州特色','B');
+
+// Day3 A: 桂林→阳朔
+mk([24.77,110.49],'🛶 遇龙河','D3','#f59e0b','10:00 竹筏漂流 160元/人 90min','A');
+mk([24.76,110.48],'🚲 十里画廊','D3','#f59e0b','13:30 电动车骑行 30元/天','A');
+mk([24.78,110.47],'🏘️ 西街','D3','#f59e0b','16:00 手工店+小吃+清吧','A');
+mk([24.78,110.48],'🍺 啤酒鱼晚餐','D3','#f59e0b','18:00 谢大姐啤酒鱼','A');
+mk([24.77,110.47],'🏨 阳朔民宿','D3','#a78bfa','晚入住','A');
+rl([[25.27,110.29],[25.00,110.40],[24.78,110.47]],'#f59e0b','D3 桂林→阳朔 65km/1.5h','A');
+
+// Day3 B: 柳州→梧州
+mk([24.308,109.402],'⛰️ 马鞍山','D3','#f59e0b','08:30 俯瞰柳州全景','B');
+mk([24.28,109.39],'🌿 龙潭公园','D3','#f59e0b','09:30 风雨桥+湖边','B');
+mk([23.51,111.27],'🏘️ 梧州骑楼城','D3','#f59e0b','15:00 560栋百年骑楼，免费','B');
+mk([23.505,111.275],'🍵 梧州美食','D3','#f59e0b','15:30 龟苓膏/六堡茶/纸包鸡','B');
+mk([23.508,111.265],'🏨 梧州酒店','D3','#a78bfa','晚入住','B');
+rl([[24.33,109.41],[24.00,109.80],[23.70,110.50],[23.51,111.27]],'#f59e0b','D3 柳州→梧州 230km/2.5h','B');
+
+// Day4 A: 阳朔→深圳
+mk([24.77,110.48],'🌅 工农桥','D4','#22c55e','08:30 拍月亮山','A');
+mk([23.10,112.80],'⛽ 肇庆服务区','D4','#94a3b8','~12:00 快充','A');
+rl([[24.78,110.47],[24.30,111.00],[23.80,111.80],[23.10,112.80],[22.75,113.55]],'#22c55e','D4 阳朔→深圳 500km/5.5h','A');
+
+// Day4 B: 梧州→深圳
+mk([23.515,111.275],'🌊 河滨公园','D4','#22c55e','08:30 西江桂江交汇','B');
+rl([[23.51,111.27],[23.30,111.80],[23.00,112.50],[22.75,113.55]],'#22c55e','D4 梧州→深圳 350km/3.5h','B');
+
+map.fitBounds([[22.5,113.6],[25.5,109.0]]);
+</script>
+</body>
+</html>
